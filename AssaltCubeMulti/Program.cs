@@ -82,7 +82,7 @@ class Program : Overlay
         // Define a origem da linha de visão do jogador local no centro da janela.
         lineOrigin = new Vector2(windowLocation.X + windowSize.X / 2, window.Bottom);
 
-        windowCenter = new Vector2(windowSize.X / 2, windowSize.Y / 2);
+        windowCenter = new Vector2(windowLocation.X + windowSize.X / 2, windowLocation.Y + windowSize.Y / 2);
 
         while (true)
         {
@@ -117,10 +117,10 @@ class Program : Overlay
 
         foreach (Entity entity in Entities)
         {
-            var wtsFeet = WorldToScreen(ReadMatrix(), entity.feet, (int)windowSize.X, (int)windowSize.Y);
-            var wtsHead = WorldToScreen(ReadMatrix(), entity.head, (int)windowSize.X, (int)windowSize.Y);
+            var wtsFeet = Vector2.Add(WorldToScreen(ReadMatrix(), entity.feet, (int)windowSize.X, (int)windowSize.Y), windowLocation);
+            var wtsHead = Vector2.Add(WorldToScreen(ReadMatrix(), entity.head, (int)windowSize.X, (int)windowSize.Y), windowLocation);
 
-            if(wtsFeet.X > 0)
+            if (wtsFeet.X > windowLocation.X)
             {
                 inDrawListPtr.AddLine(lineOrigin, wtsFeet, colorRed, 1.5f);
                 
