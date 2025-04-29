@@ -6,6 +6,7 @@ using recoil_warzone_gui;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Vortice.Direct3D11;
 
 class Program : Overlay
 {
@@ -122,17 +123,39 @@ class Program : Overlay
 
             if (wtsFeet.X > windowLocation.X)
             {
-                inDrawListPtr.AddLine(lineOrigin, wtsFeet, colorRed, 1.5f);
-                
+                DrawLine(lineOrigin, wtsFeet, colorRed);
+                DrawBox(wtsHead, wtsFeet, colorRed); 
             }
         }
 
     }
 
+    void DrawBox(Vector2 headScreenPos, Vector2 feetScreenPos, uint color)
+    {
+        // Calcula a largura da box baseada na diferença de altura
+        float boxHeight = feetScreenPos.Y - headScreenPos.Y;
+        float boxWidth = boxHeight / 2; // Largura proporcional à altura
+
+        Vector2 boxStart = new Vector2(
+            headScreenPos.X - boxWidth / 2, // Centro X - metade da largura
+            headScreenPos.Y                 // Topo da box na posição Y da cabeça
+        );
+
+        Vector2 boxEnd = new Vector2(
+            headScreenPos.X + boxWidth / 2, // Centro X + metade da largura
+            feetScreenPos.Y                 // Base da box na posição Y dos pés
+        );
+
+        inDrawListPtr.AddRect(boxStart, boxEnd, color, 1.5f);
+    }
+
+    void DrawLine(Vector2 lineOrigin, Vector2 lineEnd, uint color)
+    {
+        inDrawListPtr.AddLine(lineOrigin, lineEnd, color, 2f);
+    }
+
     void DrawFovCircle(float radius, uint color)
     {
-       
-
         inDrawListPtr.AddCircle(windowCenter, radius, color, 64, 1.5f);
     }
 
