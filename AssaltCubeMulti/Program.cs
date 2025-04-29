@@ -62,6 +62,8 @@ class Program : Overlay
     {
         DrawOverlay();
         Esp();
+        ImGui.End();
+
     }
 
     void MainLogic()
@@ -108,7 +110,6 @@ class Program : Overlay
     void Esp()
     {
         inDrawListPtr = ImGui.GetWindowDrawList();
-        var window = GetWindowRect(memory.GetProcess().MainWindowHandle);
 
         DrawFovCircle(100f, ImGui.GetColorU32(new System.Numerics.Vector4(1, 1, 1, 0.4f)));
 
@@ -121,8 +122,6 @@ class Program : Overlay
 
             if(wtsFeet.X > 0)
             {
-                var lineOrigin = new Vector2(windowLocation.X + windowSize.X / 2, window.Bottom);
-
                 inDrawListPtr.AddLine(lineOrigin, wtsFeet, colorRed, 1.5f);
                 
             }
@@ -132,11 +131,9 @@ class Program : Overlay
 
     void DrawFovCircle(float radius, uint color)
     {
-        var window = GetWindowRect(memory.GetProcess().MainWindowHandle);
-        windowLocation = new Vector2(window.Left, window.Top);
-        var centerScreen = windowLocation + new Vector2(windowSize.X / 2, windowSize.Y / 2);
+       
 
-        inDrawListPtr.AddCircle(centerScreen, radius, color, 64, 1.5f);
+        inDrawListPtr.AddCircle(windowCenter, radius, color, 64, 1.5f);
     }
 
     bool IsPixelInsideScreen(Vector2 pixel)
@@ -164,18 +161,18 @@ class Program : Overlay
         Vector2 screenCoordinates = new Vector2();
 
         // Calcula as coordenadas da tela com base na matriz de visualização e na posição 3D.
-        float screenW = (matrix.m41 * pos.X) + (matrix.m42 * pos.Y) + (matrix.m43 * pos.Z) + matrix.m44;
+        float screenW = (matrix.m14 * pos.X) + (matrix.m24 * pos.Y) + (matrix.m34 * pos.Z) + matrix.m44;
 
         // Verifica se a posição está na frente da câmera antes de calcular as coordenadas da tela.
         if (screenW > 0.001f)
         {
             // Calcula as coordenadas da tela com base na matriz de visualização e na posição 3D.
-            float screenX = (matrix.m11 * pos.X) + (matrix.m12 * pos.Y) + (matrix.m13 * pos.Z) + matrix.m14;
+            float screenX = (matrix.m11 * pos.X) + (matrix.m21 * pos.Y) + (matrix.m31 * pos.Z) + matrix.m41;
 
-            float screenY = (matrix.m21 * pos.X) + (matrix.m22 * pos.Y) + (matrix.m23 * pos.Z) + matrix.m24;
+            float screenY = (matrix.m12 * pos.X) + (matrix.m22 * pos.Y) + (matrix.m32 * pos.Z) + matrix.m42;
 
-            float camX = width / 2;
-            float camY = height / 2;
+            float camX = width / 2f;
+            float camY = height / 2f;
 
             float X = camX + (camX * screenX / screenW);
             float Y = camY - (camY * screenY / screenW);
