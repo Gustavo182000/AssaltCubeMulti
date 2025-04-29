@@ -121,31 +121,35 @@ class Program : Overlay
             var wtsFeet = Vector2.Add(WorldToScreen(ReadMatrix(), entity.feet, (int)windowSize.X, (int)windowSize.Y), windowLocation);
             var wtsHead = Vector2.Add(WorldToScreen(ReadMatrix(), entity.head, (int)windowSize.X, (int)windowSize.Y), windowLocation);
 
+            var (boxStart, boxEnd) = CalculateBoundingBox(wtsHead, wtsFeet);
+
             if (wtsFeet.X > windowLocation.X)
             {
                 DrawLine(lineOrigin, wtsFeet, colorRed);
-                DrawBox(wtsHead, wtsFeet, colorRed); 
+                DrawBox(boxStart, boxEnd, colorRed);
+                DrawTextName(boxStart, boxEnd, entity.name, colorRed);
+                DrawTextNameHp(boxStart, boxEnd, entity.health.ToString(), colorRed); 
             }
         }
 
     }
 
-    void DrawBox(Vector2 headScreenPos, Vector2 feetScreenPos, uint color)
+    void DrawTextName(Vector2 boxStart, Vector2 boxEnd, string text, uint color)
     {
-        // Calcula a largura da box baseada na diferença de altura
-        float boxHeight = feetScreenPos.Y - headScreenPos.Y;
-        float boxWidth = boxHeight / 2; // Largura proporcional à altura
+        Vector2 textPosition = new Vector2(boxStart.X + (boxEnd.X - boxStart.X) / 2 - 10, boxStart.Y - 20); // Ajuste o valor 20 para mover o texto para cima ou para baixo conforme necessário.
 
-        Vector2 boxStart = new Vector2(
-            headScreenPos.X - boxWidth / 2, // Centro X - metade da largura
-            headScreenPos.Y                 // Topo da box na posição Y da cabeça
-        );
+        inDrawListPtr.AddText(textPosition, color, text);
+    }   
+    
+    void DrawTextNameHp(Vector2 boxStart, Vector2 boxEnd, string text, uint color)
+    {
+        Vector2 textPosition = new Vector2(boxStart.X + (boxEnd.X - boxStart.X) / 2 - 10, boxEnd.Y + 5 );
 
-        Vector2 boxEnd = new Vector2(
-            headScreenPos.X + boxWidth / 2, // Centro X + metade da largura
-            feetScreenPos.Y                 // Base da box na posição Y dos pés
-        );
+        inDrawListPtr.AddText(textPosition, color, text);
+    }
 
+    void DrawBox(Vector2 boxStart, Vector2 boxEnd, uint color)
+    {
         inDrawListPtr.AddRect(boxStart, boxEnd, color, 1.5f);
     }
 
@@ -159,9 +163,22 @@ class Program : Overlay
         inDrawListPtr.AddCircle(windowCenter, radius, color, 64, 1.5f);
     }
 
-    bool IsPixelInsideScreen(Vector2 pixel)
+    public static (Vector2 boxStart, Vector2 boxEnd) CalculateBoundingBox(Vector2 headScreenPos, Vector2 feetScreenPos, float widthRatio = 0.5f)
     {
-        return pixel.X > 0 && pixel.X < windowSize.X && pixel.Y > 0 && pixel.Y < windowSize.Y;
+        float boxHeight = feetScreenPos.Y - 1 - headScreenPos.Y;
+        float boxWidth = boxHeight  * widthRatio;
+
+        Vector2 boxStart = new Vector2(
+            headScreenPos.X - boxWidth / 2,  // Centro X - metade da largura
+            headScreenPos.Y                  // Topo da box na posição Y da cabeça
+        );
+
+        Vector2 boxEnd = new Vector2(
+            headScreenPos.X + boxWidth / 2,  // Centro X + metade da largura
+            feetScreenPos.Y                  // Base da box na posição Y dos pés
+        );
+
+        return (boxStart, boxEnd);
     }
 
     void DrawOverlay()
