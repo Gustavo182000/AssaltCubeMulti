@@ -112,7 +112,6 @@ class Program : Overlay
     {
         inDrawListPtr = ImGui.GetWindowDrawList();
 
-        DrawFovCircle(100f, ImGui.GetColorU32(new System.Numerics.Vector4(1, 1, 1, 0.4f)));
 
         var colorRed = ImGui.GetColorU32(new System.Numerics.Vector4(1, 0, 0, 0.4f));
 
@@ -158,10 +157,7 @@ class Program : Overlay
         inDrawListPtr.AddLine(lineOrigin, lineEnd, color, 2f);
     }
 
-    void DrawFovCircle(float radius, uint color)
-    {
-        inDrawListPtr.AddCircle(windowCenter, radius, color, 64, 1.5f);
-    }
+
 
     public static (Vector2 boxStart, Vector2 boxEnd) CalculateBoundingBox(Vector2 headScreenPos, Vector2 feetScreenPos, float widthRatio = 0.5f)
     {
