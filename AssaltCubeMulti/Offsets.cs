@@ -16,6 +16,8 @@ namespace AssaltCubeMulti
             vFeet = 0x28, //Position Z
             vAngle = 0x34,
             vHealth = 0xEC,
-            vName = 0x205;
+            vName = 0x205,
+            vRifleAmmo = 0x140,
+            vGrenadeAmmo = 0x144;
     }
 }

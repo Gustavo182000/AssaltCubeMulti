@@ -15,5 +15,7 @@ namespace AssaltCubeMulti
         public float mag, viewOffset;
         public int health;
         public string name;
+        public int rifleAmmo { get; set; }
+        public int grenadeAmmo { get; set; }
     }
 }

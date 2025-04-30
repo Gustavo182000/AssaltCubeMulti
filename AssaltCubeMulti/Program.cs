@@ -48,6 +48,19 @@ class Program : Overlay
     Vector2 windowCenter = new Vector2(1920 / 2, 1080 / 2);
     ImDrawListPtr inDrawListPtr = new ImDrawListPtr();
 
+    public bool enableBox;
+    public bool enableLine;
+    public bool enableName;
+    public bool enableHp;
+    public bool enableAim;
+    public bool enableInfiniteRifleAmmo;
+    public bool enableInfiniteGranadeAmmo;
+
+    Vector4 lineColor = new Vector4(1, 0, 0, 0.4f);
+    Vector4 boxColor = new Vector4(1, 0, 0, 0.4f);
+    Vector4 nameColor = new Vector4(1, 0, 0, 0.4f);
+    Vector4 hpColor = new Vector4(1, 0, 0, 0.4f);
+
 
     static void Main(string[] args)
     {
@@ -61,9 +74,93 @@ class Program : Overlay
 
     protected override void Render()
     {
+        DrawMenu();
         DrawOverlay();
         Esp();
         ImGui.End();
+
+    }
+
+    uint selectedKey = KeysW32.Ctrl;
+    int currentKeyIndex = 0;
+
+    List<string> keyNames = new List<string>();
+    List<uint> keyValues = new List<uint>();
+    bool keysInitialized = false;
+
+    void DrawMenu()
+    {
+        ImGui.SetNextWindowSize(new Vector2(300, 300));
+        ImGui.Begin("AssaultCube");
+
+        if (ImGui.BeginTabBar("Tabs"))
+        {
+            if (ImGui.BeginTabItem("Visuals"))
+            {
+                ImGui.Checkbox("Enable Box", ref enableBox);
+                ImGui.Checkbox("Enable Line", ref enableLine);
+                ImGui.Checkbox("Enable Name", ref enableName);
+                ImGui.Checkbox("Enable HP", ref enableHp);
+
+                ImGui.NewLine();
+
+
+                ImGui.EndTabItem();
+            }
+
+
+            if (ImGui.BeginTabItem("Aim"))
+            {
+                ImGui.Checkbox("Enable Aim", ref enableAim);
+
+                if (!keysInitialized)
+                {
+                    keyNames.Add("F1"); keyValues.Add(KeysW32.F1);
+                    keyNames.Add("F2"); keyValues.Add(KeysW32.F2);
+                    keyNames.Add("Insert"); keyValues.Add(KeysW32.Insert);
+                    keyNames.Add("ArrowUp"); keyValues.Add(KeysW32.ArrowUp);
+                    keyNames.Add("A"); keyValues.Add(KeysW32.A);
+                    keyNames.Add("B"); keyValues.Add(KeysW32.B);
+                    keyNames.Add("Enter"); keyValues.Add(KeysW32.Enter);
+                    keyNames.Add("Escape"); keyValues.Add(KeysW32.Escape);
+                    keyNames.Add("Space"); keyValues.Add(KeysW32.Space);
+                    keyNames.Add("Left Mouse"); keyValues.Add(KeysW32.MouseLeft);
+                    keyNames.Add("Right Mouse"); keyValues.Add(KeysW32.MouseRight);
+                    keyNames.Add("Shift"); keyValues.Add(KeysW32.Shift);
+                    keyNames.Add("Ctrl"); keyValues.Add(KeysW32.Ctrl);
+                    keyNames.Add("Alt"); keyValues.Add(KeysW32.Alt);
+                    keysInitialized = true;
+                }
+                currentKeyIndex = keyValues.IndexOf(selectedKey);
+                if (ImGui.Combo("Aim Key", ref currentKeyIndex, keyNames.ToArray(), keyNames.Count))
+                {
+                    selectedKey = keyValues[currentKeyIndex];
+                }
+
+                ImGui.EndTabItem();
+            }
+
+            if (ImGui.BeginTabItem("Misc"))
+            {
+                ImGui.Checkbox("Infinite Rifle Ammo", ref enableInfiniteRifleAmmo);
+                ImGui.Checkbox("Infinite Grenade Ammo", ref enableInfiniteGranadeAmmo);
+
+                ImGui.EndTabItem();
+            }
+
+
+            if (ImGui.BeginTabItem("Colors"))
+            {
+                ImGui.ColorEdit4("Line Color", ref lineColor);
+                ImGui.ColorEdit4("Box Color", ref boxColor);
+                ImGui.ColorEdit4("Name Color", ref nameColor);
+                ImGui.ColorEdit4("HP Color", ref hpColor);
+                ImGui.EndTabItem();
+
+            }
+
+        }
+        ImGui.EndTabBar();
 
     }
 
@@ -92,7 +189,13 @@ class Program : Overlay
 
             Entities = Entities.OrderBy(x => x.mag).ToList();
 
-            if ((Win32.GetKeyState(KeysW32.Ctrl) & KeysW32.IsKeyPressed) > 0)
+            if (enableInfiniteRifleAmmo)
+                InfiniteRifleAmmo(LocalPlayer);
+
+            if (enableInfiniteGranadeAmmo)
+                InfiniteGranadeAmmo(LocalPlayer);
+
+            if ((Win32.GetKeyState(selectedKey) & KeysW32.IsKeyPressed) > 0 && enableAim)
             {
                 if (Entities.Count > 0)
                 {
@@ -108,12 +211,10 @@ class Program : Overlay
 
     }
 
+
     void Esp()
     {
         inDrawListPtr = ImGui.GetWindowDrawList();
-
-
-        var colorRed = ImGui.GetColorU32(new System.Numerics.Vector4(1, 0, 0, 0.4f));
 
         foreach (Entity entity in Entities)
         {
@@ -124,13 +225,31 @@ class Program : Overlay
 
             if (wtsFeet.X > windowLocation.X)
             {
-                DrawLine(lineOrigin, wtsFeet, colorRed);
-                DrawBox(boxStart, boxEnd, colorRed);
-                DrawTextName(boxStart, boxEnd, entity.name, colorRed);
-                DrawTextNameHp(boxStart, boxEnd, entity.health.ToString(), colorRed); 
+                if (enableLine)
+                    DrawLine(lineOrigin, wtsFeet, ImGui.GetColorU32(lineColor));
+                if (enableBox)
+                    DrawBox(boxStart, boxEnd, ImGui.GetColorU32(boxColor));
+                if (enableName)
+                    DrawTextName(boxStart, boxEnd, entity.name, ImGui.GetColorU32(nameColor));
+                if (enableHp)
+                    DrawTextNameHp(boxStart, boxEnd, entity.health.ToString(), ImGui.GetColorU32(hpColor));
             }
         }
 
+    }
+
+    void InfiniteRifleAmmo(Entity localPlayer)
+    {
+        var rifleAmmo = memory.ReadInt(localPlayer.baseAddress, Offsets.vRifleAmmo);
+        if (rifleAmmo < 100)
+            memory.WriteInt(localPlayer.baseAddress, Offsets.vRifleAmmo, 100);
+    }
+
+    void InfiniteGranadeAmmo(Entity localPlayer)
+    {
+        var grenadeAmmo = memory.ReadInt(localPlayer.baseAddress, Offsets.vGrenadeAmmo);
+        if (grenadeAmmo < 100)
+            memory.WriteInt(localPlayer.baseAddress, Offsets.vGrenadeAmmo, 100);
     }
 
     void DrawTextName(Vector2 boxStart, Vector2 boxEnd, string text, uint color)
@@ -138,11 +257,11 @@ class Program : Overlay
         Vector2 textPosition = new Vector2(boxStart.X + (boxEnd.X - boxStart.X) / 2 - 10, boxStart.Y - 20); // Ajuste o valor 20 para mover o texto para cima ou para baixo conforme necessário.
 
         inDrawListPtr.AddText(textPosition, color, text);
-    }   
-    
+    }
+
     void DrawTextNameHp(Vector2 boxStart, Vector2 boxEnd, string text, uint color)
     {
-        Vector2 textPosition = new Vector2(boxStart.X + (boxEnd.X - boxStart.X) / 2 - 10, boxEnd.Y + 5 );
+        Vector2 textPosition = new Vector2(boxStart.X + (boxEnd.X - boxStart.X) / 2 - 10, boxEnd.Y + 5);
 
         inDrawListPtr.AddText(textPosition, color, text);
     }
@@ -162,7 +281,7 @@ class Program : Overlay
     public static (Vector2 boxStart, Vector2 boxEnd) CalculateBoundingBox(Vector2 headScreenPos, Vector2 feetScreenPos, float widthRatio = 0.5f)
     {
         float boxHeight = feetScreenPos.Y - 1 - headScreenPos.Y;
-        float boxWidth = boxHeight  * widthRatio;
+        float boxWidth = boxHeight * widthRatio;
 
         Vector2 boxStart = new Vector2(
             headScreenPos.X - boxWidth / 2,  // Centro X - metade da largura
